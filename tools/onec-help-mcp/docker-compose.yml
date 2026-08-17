@@ -1,0 +1,74 @@
+services:
+  # MCP сервер справки 1С
+  onec-help-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: onec-help-mcp
+    ports:
+      - "9063:9063"
+    # На Linux host.docker.internal по умолчанию не резолвится — без этого Qdrant и embedding недоступны
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Исходный код (изменения без пересборки)
+      - ./src:/app/src:ro
+      # Папка со справкой 1С
+      - ./data/help1c:/app/data/help1c:ro
+      # Кэш справки
+      - ./data/cache/onec-help-mcp:/app/cache
+      # Логи
+      - ./data/logs/onec-help-mcp:/app/logs
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=9063
+      - SERVER_NAME=MCP 1C Help Server
+      - DEFAULT_PLATFORM_VERSION=${DEFAULT_PLATFORM_VERSION:-8.3.26}
+      - HELP_BASE_PATH=/app/data/help1c
+      - CACHE_DIR=/app/cache
+      - LOGS_PATH=/app/logs
+      # По именам контейнеров (надёжный DNS внутри сети)
+      - EMBEDDING_SERVICE_URL=${EMBEDDING_SERVICE_URL:-http://onec-help-embedding:8004}
+      - QDRANT_URL=${QDRANT_URL:-http://onec-help-qdrant:6333}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      - qdrant
+      - embedding-lite
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9063/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+  # Локальный Qdrant для хранения векторных индексов справки
+  # Версия как в onec-context-engine (latest → 1.16.x), иначе storage от 1.16 не читается в 1.11
+  qdrant:
+    image: qdrant/qdrant:v1.16.3
+    container_name: onec-help-qdrant
+    ports:
+      - "6347:6333"
+    volumes:
+      - ./data/qdrant-storage:/qdrant/storage
+    networks:
+      - mcp-network
+
+  # Встроенный embedding-service-lite (CPU по умолчанию)
+  embedding-lite:
+    build:
+      context: .
+      dockerfile: Dockerfile.embedding-lite-cpu
+    container_name: onec-help-embedding
+    ports:
+      - "8014:8004"
+    environment:
+      - EMBEDDING_DEVICE=cpu
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge

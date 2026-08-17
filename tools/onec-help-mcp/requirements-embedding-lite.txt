@@ -1,0 +1,7 @@
+# Requirements for embedding-service-lite (CPU/GPU-agnostic, without torch)
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+sentence-transformers==3.0.1
+transformers==4.41.2
+tokenizers==0.19.1
+nltk==3.9.1

@@ -1,0 +1,4 @@
+# Конфигурация bsl-analyzer (workspace profile)
+# После инициализации проекта (src/cf) включите профиль bsl-analyzer-workspace в opencode.jsonc
+# и при необходимости укажите каталог исходников конфигурации.
+source_root = "src/cf"

@@ -1,0 +1,18 @@
+services:
+  # Профиль GPU: подменяем embedding-lite на GPU-образ
+  embedding-lite:
+    build:
+      context: .
+      dockerfile: Dockerfile.embedding-lite-gpu
+    container_name: onec-help-embedding-gpu
+    ports:
+      - "8014:8004"
+    environment:
+      - EMBEDDING_DEVICE=gpu
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge
+

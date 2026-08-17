@@ -1,0 +1,89 @@
+{
+  "mcpServers": {
+    "bsl-lsp-bridge": {
+      "comment": "FREE - BSL Language Server integration for code analysis",
+      "command": "curl",
+      "args": [
+        "-X", "POST",
+        "http://YOUR_SERVER:5007/mcp",
+        "-H", "Content-Type: application/json",
+        "-d", "@-"
+      ]
+    },
+    "rlm-toolkit": {
+      "comment": "FREE - Persistent memory between chat sessions",
+      "command": "curl",
+      "args": [
+        "-X", "POST",
+        "http://YOUR_SERVER:8200/mcp",
+        "-H", "Content-Type: application/json",
+        "-d", "@-"
+      ]
+    },
+    "1c-help": {
+      "comment": "PAID - 1C platform documentation search",
+      "command": "curl",
+      "args": [
+        "-X", "POST",
+        "http://YOUR_SERVER:8003/mcp",
+        "-H", "Content-Type: application/json",
+        "-d", "@-"
+      ]
+    },
+    "1c-ssl": {
+      "comment": "PAID - BSL (Standard Subsystems Library) functions",
+      "command": "curl",
+      "args": [
+        "-X", "POST",
+        "http://YOUR_SERVER:8008/mcp",
+        "-H", "Content-Type: application/json",
+        "-d", "@-"
+      ]
+    },
+    "1c-templates": {
+      "comment": "PAID - Code templates and patterns",
+      "command": "curl",
+      "args": [
+        "-X", "POST",
+        "http://YOUR_SERVER:8004/mcp",
+        "-H", "Content-Type: application/json",
+        "-d", "@-"
+      ]
+    },
+    "1c-syntax-checker": {
+      "comment": "PAID - BSL syntax validation",
+      "command": "curl",
+      "args": [
+        "-X", "POST",
+        "http://YOUR_SERVER:8002/mcp",
+        "-H", "Content-Type: application/json",
+        "-d", "@-"
+      ]
+    },
+    "1c-code-checker": {
+      "comment": "PAID - Business logic validation via 1C:Naparynik",
+      "command": "curl",
+      "args": [
+        "-X", "POST",
+        "http://YOUR_SERVER:8007/mcp",
+        "-H", "Content-Type: application/json",
+        "-d", "@-"
+      ]
+    },
+    "1c-forms": {
+      "comment": "PAID - Managed forms schemas (XSD/JSON)",
+      "command": "curl",
+      "args": [
+        "-X", "POST",
+        "http://YOUR_SERVER:8011/mcp",
+        "-H", "Content-Type: application/json",
+        "-d", "@-"
+      ]
+    },
+    "edt-mcp": {
+      "comment": "FREE - EDT-MCP by DitriX (github.com/DitriXNew/EDT-MCP). Read modules, search code, find references, validate queries. Requires open project in EDT.",
+      "type": "http",
+      "url": "http://YOUR_EDT_SERVER:8765/mcp"
+    }
+  }
+}

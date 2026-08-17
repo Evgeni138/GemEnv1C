@@ -1,0 +1,48 @@
+# Embedding Service Lite - CPU
+FROM python:3.12-slim
+
+LABEL maintainer="Roman Zateev"
+LABEL description="Embedding Service Lite (CPU) for 1C Help"
+
+WORKDIR /app
+
+# Системные зависимости
+RUN apt-get update && apt-get install -y \
+    git \
+    build-essential \
+    curl \
+    libgomp1 \
+    unzip \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Python зависимости
+COPY requirements-embedding-lite.txt /tmp/requirements-embedding-lite.txt
+
+# 1. Обновляем pip
+RUN pip install --no-cache-dir --upgrade pip
+
+# 2. Устанавливаем torch CPU отдельно (через официальный индекс)
+RUN pip install --no-cache-dir torch==2.5.0 --index-url https://download.pytorch.org/whl/cpu
+
+# 3. Остальные зависимости
+RUN pip install --no-cache-dir -r /tmp/requirements-embedding-lite.txt
+
+# Копируем код сервиса
+COPY embedding_service_lite/ /app/embedding_service_lite/
+
+# Директории для BM25 и кешей моделей
+ENV TORCH_HOME=/cache/torch
+ENV HF_HOME=/cache/huggingface
+RUN mkdir -p /cache/torch /cache/huggingface /app/data/bm25-storage
+
+ENV EMBEDDING_DEVICE=cpu
+ENV PYTHONUNBUFFERED=1
+
+EXPOSE 8004
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8004/health || exit 1
+
+CMD ["uvicorn", "embedding_service_lite.main:app", "--host", "0.0.0.0", "--port", "8004"]
+

@@ -1,0 +1,203 @@
+# {{PROJECT_NAME}} — Claude Code Configuration
+
+## 1C Development Rules
+IMPORTANT: Read and follow all rules in `~/.claude/1c-development-rules.md`.
+These rules are mandatory for all 1C development work in this project.
+
+## Project
+
+{{PROJECT_DESCRIPTION}}
+
+## 1C Connection
+
+- Platform: 1C:Enterprise {{V8_VERSION}}
+- Server: {{SERVER}}:{{PORT}}  (onec-server-{{SERVER_SUFFIX}} on CT107)
+- Base: {{BASE_NAME}}
+- Web (CT107): `http://192.168.0.107:{{WEB_PORT}}/{{PUBLICATION}}/`
+- Publication: `http://localhost/{{PUBLICATION}}/hs/ai/`
+{{#EXTENSION_NAMES}}{{EXTENSION_LINE}}
+
+## Development zone
+
+**Primary: {{DEV_ZONE}}**
+{{DEV_ZONE_NOTE}}
+
+## Structure
+
+```
+{{STRUCTURE_LINES}}
+openspec/              — SDD specs and proposals
+.claude/skills/        — skills for Claude Code
+.claude/docs/          — 1C platform specs
+```
+
+## MANDATORY: Autonomy After Approval
+
+**One approval point per task. After user says "ok" — execute autonomously.**
+- Ask clarifying questions BEFORE showing the plan
+- Show design+plan → get ONE approval
+- After "ok": do NOT ask "can I proceed?", "is this ok?", "should I continue?"
+- Only stop for blockers (impossible to continue, contradictory requirements)
+
+## MANDATORY: MCP Triggers (non-negotiable)
+
+| Situation | Tool | Action |
+|-----------|------|--------|
+| Need 1C platform syntax / method docs | `1c-help` | Call `helpsearch` BEFORE writing code |
+| Working with BSP subsystems | `1c-ssl` | Call `ssl_search` for correct BSP patterns |
+| Need a code template / pattern | `1c-templates` | Call `template_search` BEFORE writing from scratch |
+| Wrote BSL code | `1c-syntax-checker` | Call `check_syntax` ALWAYS after writing BSL |
+| Complex logic review | `1c-code-checker` | Call to verify logic |
+| Working with managed forms XML | `1c-forms` | Call `get_form_schema` for structure reference |
+| Project context | `rlm-toolkit` | Call `rlm_route_context` at session start |
+
+## Skills (key commands)
+
+### Metadata objects
+- `/meta-compile`, `/meta-edit`, `/meta-info`, `/meta-remove`, `/meta-validate`
+
+### Forms
+- `/form-compile`, `/form-edit`, `/form-add`, `/form-info`, `/form-validate`, `/form-patterns`
+- `/help-add` — add built-in help to object
+
+### External processors & reports
+- `/epf-init`, `/epf-build`, `/epf-dump`, `/epf-validate`, `/epf-add-form`
+- `/erf-init`, `/erf-build`, `/erf-dump`, `/erf-validate`
+
+### BSP integration
+- `/epf-bsp-init`, `/epf-bsp-add-command`, `/bsp-patterns`
+
+### SKD (reports)
+- `/skd-compile`, `/skd-edit`, `/skd-info`, `/skd-validate`
+
+### Layouts (print forms)
+- `/mxl-compile`, `/mxl-decompile`, `/mxl-info`, `/mxl-validate`
+- `/template-add`, `/template-remove` — add/remove layout from object
+- `/img-grid` — overlay grid on image for column proportions
+
+### Roles & permissions
+- `/role-compile`, `/role-info`, `/role-validate`
+
+### Configuration & extensions
+- `/cf-init`, `/cf-edit`, `/cf-info`, `/cf-validate`
+- `/cfe-init`, `/cfe-borrow`, `/cfe-patch-method`, `/cfe-validate`, `/cfe-diff`
+
+### Subsystems & interface
+- `/subsystem-compile`, `/subsystem-edit`, `/subsystem-info`, `/subsystem-validate`
+- `/interface-edit`, `/interface-validate`
+
+### Database
+- `/db-create`, `/db-list`, `/db-dump-cf`, `/db-load-cf`
+- `/db-dump-xml`, `/db-load-xml`, `/db-update`, `/db-run`, `/db-load-git`
+
+### Web client (Playwright)
+- `/1c-web-session` — manage 1C in browser: sessions, navigation, forms, catalogs, documents, test data
+
+### Testing
+- `/1c-test-runner` — AI testing via `1c-ai-debug` MCP (no external dependencies)
+
+### Workflow
+- `/brainstorm` — design + plan + autonomous execution (express/standard/full)
+- `/write-plan` — create tasks.md from design.md
+- `/subagent-dev` — execute tasks.md via subagents
+- `/1c-help-mcp` — 1C platform docs search
+- `/1c-query-opt` — query optimization
+- `/openspec-proposal`, `/openspec-apply`, `/openspec-archive` — SDD workflow
+
+## Development rules
+
+### 1C coding
+- Follow BSP and ITS standards
+- Cyrillic for 1C/BSL code, Latin for infrastructure
+- Tabs for indentation in BSL
+
+### BOM rules (critical)
+- All BSL and XML files require UTF-8 BOM (`efbbbf`)
+- Write tool does NOT add BOM — add manually after writing new BSL/XML
+- HTTP requests: use `"UTF-8"` string literal (NOT `КодировкаТекста.UTF8` — adds BOM to body)
+
+### 1C gotchas (learned)
+- **HTTP BOM**: `УстановитьТелоИзСтроки(str, КодировкаТекста.UTF8)` adds BOM → breaks JSON parsing on receiver. Always use `"UTF-8"` string literal.
+- **Form.xml pages**: correct structure is `<Pages><ChildItems><Page>`, NOT `<PagesGroup><Page>`. `PagesGroup` does not exist.
+- **Form.xml EnumRef**: use `cfg:EnumRef.EnumName` (short), NOT `cfg:EnumerationRef.EnumName`. Wrong prefix = XDTO exception on db-load.
+- **Структура key names**: must be valid identifiers (letters/digits/`_`). Spaces → runtime error. Use `Соответствие` for arbitrary string keys.
+- **Extension CommonModule**: `Перем` on module level is FORBIDDEN → "Ошибка инициализации модуля". Extensions = stateless only.
+- **Error methods**: deprecated `КраткоеПредставлениеОшибки`/`ПодробноеПредставлениеОшибки`. Use: `ИнформацияОбОшибке.Описание` + `.ИмяМодуля` + `.НомерСтроки`.
+- **Before writing any Form.xml**: query `1c-forms` MCP schema OR grep existing `Form.xml` in `src/` for the element you need.
+
+### DB load rules
+- **Syntax check BEFORE commit** — run `1c-syntax-checker` on all changed BSL files before committing and loading.
+- **Commit BEFORE `/db-load-xml`** — always. If load fails or needs rollback, git has the restore point.
+- **Two-step partial load**: when new CommonModule is referenced by EventSubscription/ScheduledJob:
+  1. Load module first: `-Files "CommonModules/Foo.xml,CommonModules/Foo/Ext/Module.bsl"`, run `/db-update`
+  2. Then load referencing objects: `-Files "EventSubscriptions/Bar.xml,..."`
+  Reason: 1C validates method references against current DB state during load.
+
+### SDD Workflow
+- Use `/brainstorm` for complex features (3+ files, new integrations)
+- Spec BEFORE code (`openspec/changes/`)
+- One approval → autonomous execution → report at end
+
+### Security
+- NEVER force push to main/master
+- DO NOT commit credentials, .1c-devbase.bat, .env
+- Do not skip git hooks
+
+### Model selection
+- Sonnet for 90%+ tasks
+- Opus for architecture, security, production bugs
+
+### Agent Teams ("новая задача" trigger)
+- Complex tasks (6+ files, parallel work) → Opus leader + Sonnet teammates
+- AI decides team composition, user approves once
+- RLM as shared memory: checkpoint after EACH task
+- SendMessage for coordination (RLM facts from subagents are session-isolated — not visible to leader)
+
+### Context
+- RLM-first: check RLM before reading files
+- Save decisions to RLM after completing tasks
+
+### Done checklist
+When a feature/task is complete — verify all steps:
+- [ ] BSL syntax check passed (`1c-syntax-checker`) on all changed BSL files
+- [ ] All changes committed to git (BEFORE `/db-load-xml`)
+- [ ] `/db-load-xml` applied (partial or full as needed)
+- [ ] `/db-update` applied
+- [ ] Changes tested (manual verification via web client)
+- [ ] Key design decisions saved to RLM (`rlm_record_causal_decision`)
+- [ ] External API docs created in `docs/` if task involves integration
+- [ ] OpenSpec archived (`/openspec-archive`) if spec was used
+- [ ] Session summarized to RLM (`суммаризируем`)
+
+## MCP servers
+
+Global (always available via `~/.claude/mcp.json`):
+- `rlm-toolkit` (CT105, 192.168.0.106:8200/mcp) — persistent memory
+
+General (CT104, 192.168.0.104) — all 1C projects:
+- `1c-help` (:8003) — 1C platform docs
+- `1c-ssl` (:8008) — BSP docs
+- `1c-templates` (:8004) — 1C code templates
+- `1c-syntax-checker` (:8002) — BSL syntax check
+- `1c-code-checker` (:8007) — logic check via 1C Companion
+- `1c-forms` (:8011) — managed forms context
+- `playwright` — browser automation for web client (`/1c-web-session`)
+
+Project-specific (configured in `.mcp.json`):
+- `1c-ai-debug` — 1C HTTP API as MCP tools (query data, catalogs, documents, metadata)
+- `1c-codemetadata` (CT104) — structural + semantic code index (SQLite+ChromaDB)
+
+### Search rules: codemetadata vs Grep
+- **If codemetadata MCP is configured and healthy** → use `search_function`, `get_function_context`, `metadatasearch` instead of Grep
+- **Grep only when**: codemetadata not configured, MCP server is down, or searching non-BSL files (configs, XML schemas)
+- 1C platform docs → `1c-help` (not memory, not guessing)
+- BSP → `1c-ssl`
+- Form element structure → `1c-forms` MCP schema
+
+## OpenSpec
+
+- `openspec/project.md` — project context
+- `openspec/changes/` — active proposals
+- `openspec/specs/` — feature specs
+
+Skills: `/openspec-proposal`, `/openspec-apply`, `/openspec-archive`

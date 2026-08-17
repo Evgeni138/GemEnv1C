@@ -1,0 +1,22 @@
+# Конфиденциальное
+.env
+*.local
+
+# Логи
+*.log
+logs/
+mcp-server.log
+
+# Внешние инструменты — артефакты скачиваются повторно
+tools/metr/*.jar
+tools/onec-help-mcp/data/
+tools/onec-help-mcp/qdrant_storage/
+tools/onec-help-mcp/.venv/
+tools/onec-help-mcp/__pycache__/
+
+# IDE
+.idea/
+.vscode/
+
+# Сборка
+src/out/

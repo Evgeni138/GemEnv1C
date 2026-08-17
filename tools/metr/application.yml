@@ -1,0 +1,45 @@
+# METR (mcp-yaxunit-runner) — локальная конфигурация проекта
+# Активные профили: mcp,yaxunit (задаются в opencode.jsonc через SPRING_PROFILES_ACTIVE)
+# ЗАПОЛНИТЕ PLACEHOLDER-ы при подключении ИБ 1С и YAxUnit-расширений.
+
+app:
+  id: yaxunit
+  format: DESIGNER
+
+  # Каталог исходников конфигурации (корень рабочей области)
+  base-path: "D:/Env1C/Gem/src"
+
+  # Наборы исходников для разборки/сборки
+  source-set:
+    # Основная конфигурация (отдельная — без YAxUnit)
+    - path: "configuration"
+      name: configuration
+      type: "CONFIGURATION"
+      purpose: [ "TESTS" ]
+
+    # Расширение YAxUnit (как расширение)
+    - path: "yaxunit"
+      name: yaxunit
+      type: "EXTENSION"
+      purpose: [ "MAIN", "YAXUNIT" ]
+
+    # Тестовое расширение (YaXUnit-тесты)
+    - path: "tests"
+      name: tests
+      type: "EXTENSION"
+      purpose: [ "TESTS", "YAXUNIT" ]
+
+  # Строка подключения к тестовой ИБ
+  connection:
+    connection-string: "PLACEHOLDER: например, File='D:/1C/ibases/YAxUnit/';"
+
+  # Версия платформы (для загрузки платформы из v8config.json)
+  platform-version: "8.3.27.1859"
+
+  tools:
+    # Режим сборки: DESIGNER или IBCMD
+    builder: DESIGNER
+    enterprise:
+      # Ключи запуска Enterprise (1С:Предприятие)
+      additional-launch-keys:
+        - "/TESTMANAGER"

@@ -1,0 +1,49 @@
+{
+  "mcpServers": {
+    "1c-help": {
+      "type": "sse",
+      "url": "http://192.168.0.104:8003/mcp"
+    },
+    "1c-ssl": {
+      "type": "sse",
+      "url": "http://192.168.0.104:8008/mcp"
+    },
+    "1c-templates": {
+      "type": "sse",
+      "url": "http://192.168.0.104:8004/mcp"
+    },
+    "1c-syntax-checker": {
+      "type": "sse",
+      "url": "http://192.168.0.104:8002/mcp"
+    },
+    "1c-code-checker": {
+      "type": "sse",
+      "url": "http://192.168.0.104:8007/mcp"
+    },
+    "1c-forms": {
+      "type": "sse",
+      "url": "http://192.168.0.104:8011/mcp"
+    },
+    "1c-codemetadata": {
+      "type": "http",
+      "url": "{{CODEMETADATA_URL}}"
+    },
+    "1c-ai-debug": {
+      "command": "python",
+      "args": [
+        "C:/Users/Arman/workspace/ai/1c-ai-debug-extension/mcp-1c-bridge.py",
+        "--url", "http://192.168.0.107:{{WEB_PORT}}/{{PUBLICATION}}/hs/ai",
+        "--user", "{{ADMIN_USER}}",
+        "--password", "{{ADMIN_PWD}}"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest", "--timeout", "500"]
+    },
+    "mcp-bsl-lsp": {
+      "command": "ssh",
+      "args": ["root@192.168.0.101", "docker exec -i mcp-lsp-{{PROJECT_NAME}} /usr/bin/mcp-lsp-bridge mcp"]
+    }
+  }
+}

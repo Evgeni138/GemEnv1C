@@ -1,0 +1,45 @@
+# Embedding Service Lite - GPU
+# CUDA 12.8 — поддержка современных карт (RTX 50xx и др.)
+FROM pytorch/pytorch:2.7.0-cuda12.8-cudnn9-runtime
+
+LABEL maintainer="Roman Zateev"
+LABEL description="Embedding Service Lite (GPU) for 1C Help"
+
+WORKDIR /app
+
+# Дополнительные системные зависимости
+RUN apt-get update && apt-get install -y \
+    git \
+    build-essential \
+    curl \
+    libgomp1 \
+    unzip \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Python зависимости (без torch — он уже в базовом образе)
+COPY requirements-embedding-lite.txt /tmp/requirements-embedding-lite.txt
+
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/requirements-embedding-lite.txt
+
+# Копируем код сервиса
+COPY embedding_service_lite/ /app/embedding_service_lite/
+
+# Директории для BM25 и кешей моделей
+ENV TORCH_HOME=/cache/torch
+ENV HF_HOME=/cache/huggingface
+RUN mkdir -p /cache/torch /cache/huggingface /app/data/bm25-storage
+
+ENV EMBEDDING_DEVICE=gpu
+ENV PYTHONUNBUFFERED=1
+ENV CUDA_DEVICE_ORDER=PCI_BUS_ID
+ENV CUDA_VISIBLE_DEVICES=0
+
+EXPOSE 8004
+
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8004/health || exit 1
+
+CMD ["uvicorn", "embedding_service_lite.main:app", "--host", "0.0.0.0", "--port", "8004"]
+

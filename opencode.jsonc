@@ -1,0 +1,52 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "bsl-analyzer-reference": {
+      "type": "local",
+      "command": [
+        "C:\\Users\\popov\\AppData\\Local\\Programs\\bsl-analyzer\\bsl-analyzer.exe",
+        "mcp",
+        "serve",
+        "--profile",
+        "reference"
+      ],
+      "enabled": true
+    },
+    "bsl-analyzer-workspace": {
+      "type": "local",
+      "command": [
+        "C:\\Users\\popov\\AppData\\Local\\Programs\\bsl-analyzer\\bsl-analyzer.exe",
+        "mcp",
+        "serve",
+        "--profile",
+        "workspace",
+        "--source-dir",
+        "src/cf"
+      ],
+      "enabled": false
+    },
+    "rlm-tools-bsl": {
+      "type": "remote",
+      "url": "http://127.0.0.1:9000/mcp",
+      "enabled": true
+    },
+    "metr": {
+      "type": "local",
+      "command": [
+        "C:\\Program Files\\Java\\jdk-17\\bin\\java.exe",
+        "-jar",
+        "tools/metr/mcp-yaxunit-runner.jar"
+      ],
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "mcp,yaxunit",
+        "SPRING_CONFIG_IMPORT": "file:D:\\Env1C\\Gem\\tools\\metr\\application.yml"
+      },
+      "enabled": true
+    },
+    "onec-help-mcp": {
+      "type": "remote",
+      "url": "http://127.0.0.1:9063/mcp",
+      "enabled": true
+    }
+  }
+}

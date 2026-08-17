@@ -1,0 +1,33 @@
+# =============================================================================
+# Базовые зависимости для MCP сервера справки 1С
+# FastAPI, MCP, Qdrant, парсинг HTML, retry.
+# mcp подтянется как зависимость fastmcp.
+# =============================================================================
+
+# Core FastAPI stack
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+pydantic==2.11.9
+python-multipart==0.0.20
+starlette
+
+# HTTP clients
+httpx==0.28.1
+requests==2.32.5
+websockets==15.0.1
+
+# Database (поиск по справке)
+# Qdrant client 1.16.2 — совместим с сервером 1.16.3, даёт нативный гибридный поиск (Prefetch + FusionQuery RRF)
+qdrant-client==1.16.2
+
+# MCP (mcp подтянется как зависимость fastmcp)
+fastmcp==2.12.3
+
+# Парсинг HTML справки и retry
+lxml==5.2.2
+beautifulsoup4==4.13.5
+tenacity==9.1.2
+
+# Utilities
+python-dotenv==1.1.1
+python-json-logger==3.3.0
