@@ -62,7 +62,7 @@ class EmbeddingService:
                         "corpus": corpus,
                         "collection_name": collection_name
                     },
-                    timeout=120.0  # Увеличенный таймаут для построения корпуса
+                    timeout=600.0  # Увеличенный таймаут для построения корпуса
                 )
                 response.raise_for_status()
                 logger.info(f"✅ BM25 корпус успешно построен для коллекции '{collection_name}'")
@@ -75,7 +75,7 @@ class EmbeddingService:
             logger.error(f"❌ HTTP ошибка при построении BM25 корпуса: {e.response.status_code} - {e.response.text}")
             return False
         except httpx.TimeoutException as e:
-            logger.error(f"❌ Таймаут при построении BM25 корпуса (120s): {e}")
+            logger.error(f"❌ Таймаут при построении BM25 корпуса (600s): {e}")
             return False
         except Exception as e:
             logger.error(f"❌ Ошибка при построении BM25 корпуса: {type(e).__name__}: {e}")

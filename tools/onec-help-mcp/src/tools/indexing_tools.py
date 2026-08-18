@@ -46,16 +46,39 @@ async def index_platform_version(version: str) -> str:
     3. Векторизацию текстов справки
     4. Сохранение векторов в Qdrant (коллекция 1c_help_{version})
     
+    Индексация выполняется в фоновой asyncio-задаче, чтобы отмена
+    клиентского MCP-запроса не прерывала длительный процесс.
+    
     Args:
         version: Версия платформы для индексации (например, "8.3.24")
         
     Returns:
-        Результат индексации с детальной информацией
+        Сообщение о запуске индексации в фоновом режиме
     """
-    busy = _check_indexing_busy(version)
+    try:
+        normalized_version = normalize_version(version)
+    except ValueError as e:
+        return f"❌ Неверный формат версии: {str(e)}\n\n" \
+               f"Используйте формат: 8.3.24 (например, '8.3.24', '8.3.25')"
+
+    busy = _check_indexing_busy(normalized_version)
     if busy:
         return busy
 
+    task = asyncio.create_task(_run_index_in_background(normalized_version))
+    task.add_done_callback(_log_index_background_result)
+
+    return f"⏳ Индексация справки для версии **{normalized_version}** запущена в фоновом режиме.\n\n" \
+           f"Отслеживайте прогресс в логах: docker logs -f onec-help-mcp"
+
+
+async def _run_index_in_background(version: str) -> None:
+    """
+    Выполняет индексацию в фоновой задаче с защитой от повторного запуска.
+
+    Args:
+        version: Версия платформы (нормализованная)
+    """
     # Получаем блокировку для конкретной версии
     version_lock = _get_version_lock(version)
 
@@ -63,8 +86,24 @@ async def index_platform_version(version: str) -> str:
         # Повторная проверка после получения блокировки (на случай гонки)
         busy = _check_indexing_busy(version)
         if busy:
-            return busy
-        return await _index_platform_version_impl(version)
+            logger.warning(busy)
+            return
+        await _index_platform_version_impl(version)
+
+
+def _log_index_background_result(task: asyncio.Task) -> None:
+    """
+    Логирует результат фоновой индексации (успех или исключение).
+
+    Args:
+        task: Завершённая asyncio-задача индексации
+    """
+    if task.cancelled():
+        logger.error(f"❌ Фоновая индексация отменена (version={task.get_name()})")
+        return
+    exc = task.exception()
+    if exc is not None:
+        logger.error(f"❌ Ошибка фоновой индексации: {type(exc).__name__}: {exc}")
 
 
 async def _index_platform_version_impl(version: str) -> str:
@@ -242,13 +281,8 @@ async def reindex_platform_version(version: str, force: bool = False) -> str:
             logger.info(f"🗑️ Удаление существующей коллекции '{collection_name}' для переиндексации")
             await qdrant_service.delete_collection_async(collection_name)
         
-        # Запускаем индексацию
-        result = await index_platform_version(normalized_version)
-        
-        if "✅" in result:
-            return f"🔄 Переиндексация завершена!\n\n{result}"
-        else:
-            return result
+        # Запускаем индексацию в фоновом режиме
+        return await index_platform_version(normalized_version)
         
     except ValueError as e:
         return f"❌ Неверный формат версии: {str(e)}"
