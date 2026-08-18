@@ -69,6 +69,22 @@ opencode
 | `bsl-analyzer-workspace` | local (disabled до появления `src/cf`) | поиск по исходникам рабочего пространства |
 | `metr` | local (java -jar) | сборка конфигурации, YaXUnit-тесты, синтаксис-проверка |
 
+## Контекст-менеджмент (context-mode)
+
+Встроен как глобальный плагин opencode (v1.0.169, `~/.config/opencode/opencode.jsonc` → `"plugin": ["context-mode"]`).
+
+Что даёт:
+
+- **Знаниевая база сессии** — решения, ошибки, планы, промпты автоматически сохраняются в SQLite (FTS5) и доступны через `ctx_search`
+- **Think-in-Code** — песочница `ctx_execute` / `ctx_execute_file`: обработка больших файлов/выводов без засорения контекста, в память попадает только результат
+- **Веб-индексация** — `ctx_fetch_and_index` для документации и внешних источников
+- **Пакетная обработка** — `ctx_batch_execute` (параллельный запуск команд + автоиндексация вывода)
+- **Аналитика** — `ctx_stats` (потребление контекста), `ctx_doctor` (диагностика), дашборд на https://context-mode.com/insight
+
+Команды: `ctx stats` / `ctx doctor` / `ctx upgrade` / `ctx purge` (полный сброс базы).
+
+Хранилище: `C:\Users\popov\.config\opencode\context-mode\{sessions,content}`.
+
 ## Известные ограничения
 
 - Skills `1c-web-session`, `playwright-test`, `web-test` требуют MCP-сервер Playwright — в этой среде не установлен, вместо него используется METR
